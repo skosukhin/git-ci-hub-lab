@@ -1,0 +1,56 @@
+name: "gl-delete-ref"
+description: "deletes a git reference from GitLab repository"
+inputs:
+  server-url:
+    description: "GitLab server URL"
+    required: true
+  project-name:
+    description: "GitLab project name"
+    required: true
+  token:
+    description: "GitLab access token"
+    required: true
+  ref-type:
+    description: "type of the reference (tag or branch) to delete"
+    required: true
+  ref-name:
+    description: "name of the reference to delete"
+    required: true
+  python:
+    description: >
+      Python interpreter command to use to run the action scripts; if not
+      provided (i.e. the value equals to an empty string), the action runs
+      preliminary steps to sets up the required Python virtual environment
+runs:
+  using: "composite"
+  steps:
+  - id: setup-python
+    if: ${{ inputs.python == '' }}
+    uses: actions/setup-python@v4
+    with:
+      python-version: ">=3.7"
+      update-environment: false
+  - id: select-python-interpreter
+    run: |
+      python='${{ inputs.python }}'
+      if test -z "${python}"; then
+        '${{ steps.setup-python.outputs.python-path }}' -m venv \
+          '${{ github.action_path }}/venv'
+        python='${{ github.action_path }}/venv/bin/python'
+        "${python}" -m pip install --upgrade pip
+      fi
+      echo "python=${python}" >> ${GITHUB_OUTPUT}
+    shell: bash
+  - run: |
+      '${{ steps.select-python-interpreter.outputs.python }}' -m pip install \
+        -r '${{ github.action_path }}/requirements.txt'
+    shell: bash
+  - run: |
+      '${{ steps.select-python-interpreter.outputs.python }}' \
+        '${{ github.action_path }}/../bin/gchl' gl-delete-ref \
+          '--server-url=${{ inputs.server-url }}' \
+          '--project-name=${{ inputs.project-name }}' \
+          '--token=${{ inputs.token }}' \
+          '--ref-type=${{ inputs.ref-type }}' \
+          '--ref-name=${{ inputs.ref-name }}'
+    shell: bash

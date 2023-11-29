@@ -1,0 +1,45 @@
+#!/bin/sh
+""":"
+GCHL_PREFERRED_PYTHONS="python3 python"
+for cmd in "${GCHL_PYTHON:-}" ${GCHL_PREFERRED_PYTHONS}; do
+    if command -v > /dev/null "$cmd"; then
+        export GCHL_PYTHON="$(command -v "$cmd")"
+        exec "${GCHL_PYTHON}" "$0" "$@"
+    fi
+done
+echo "==> Error: gchl could not find a python interpreter!" >&2
+exit 1
+":"""
+
+import os
+
+gchl_file = os.path.realpath(os.path.expanduser(__file__))
+gchl_prefix = os.path.dirname(os.path.dirname(gchl_file))
+gchl_lib_path = os.path.join(gchl_prefix, "lib")
+
+import sys
+
+sys.path.insert(0, gchl_lib_path)
+
+import argparse
+
+parser = argparse.ArgumentParser(description="Git-CI-Hub-Lab actions")
+subparsers = parser.add_subparsers(metavar="command", dest="command")
+
+import cmd
+
+for c in cmd.commands:
+    module = cmd.get_module(c)
+    sub = subparsers.add_parser(c, help=module.description)
+    module.setup_parser(sub)
+
+if len(sys.argv) == 1:
+    parser.print_help()
+    sys.exit(1)
+
+args = parser.parse_args()
+
+try:
+    cmd.get_module(args.command).cmd(args)
+except KeyboardInterrupt:
+    pass

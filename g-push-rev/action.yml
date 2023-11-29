@@ -1,0 +1,93 @@
+name: "g-push-rev"
+description: "pushes a git revision from the local repository to the remote one"
+inputs:
+  local-path:
+    description: "local repository path"
+    default: "."
+  remote-url:
+    description: "remote repository URL"
+    required: true
+  username:
+    description: "remote repository username"
+    default: "token"
+  password:
+    description: "remote repository password"
+  rev-id:
+    description: "ID of the revision to push as understood by git-rev-parse"
+    default: "HEAD"
+  ref-type:
+    description: >
+      type of the reference (tag or branch) to be used to push rev-id to the
+      remote repository
+    default: "tag"
+  ref-name:
+    description: >
+      name of the reference to be used to push rev-id to the remote repository
+      (defaults to an arbitrary combination of ref-type and SHA-1 of rev-id)
+  ref-message:
+    description: >
+      annotation message of the reference (ignored if ref-type is not tag)
+  force-push:
+    description: "force push the reference to the remote repository"
+    default: "false"
+  safe-path:
+    description: >
+      add a temporary entry to the 'safe' section in the global git
+      configuration scope for the local-path, which might be required when the
+      local repository is created by a different user (e.g. in the container)
+    default: "false"
+  python:
+    description: >
+      Python interpreter command to use to run the action scripts; if not
+      provided (i.e. the value equals to an empty string), the action runs
+      preliminary steps to sets up the required Python virtual environment
+outputs:
+  ref-name:
+    description: >
+      name of the reference that was used to push rev-id to the remote
+      repository
+    value: ${{ steps.g-push-rev.outputs.ref-name }}
+runs:
+  using: "composite"
+  steps:
+  - id: setup-python
+    if: ${{ inputs.python == '' }}
+    uses: actions/setup-python@v4
+    with:
+      python-version: ">=3.7"
+      update-environment: false
+  - id: select-python-interpreter
+    run: |
+      python='${{ inputs.python }}'
+      if test -z "${python}"; then
+        '${{ steps.setup-python.outputs.python-path }}' -m venv \
+          '${{ github.action_path }}/venv'
+        python='${{ github.action_path }}/venv/bin/python'
+        "${python}" -m pip install --upgrade pip
+      fi
+      echo "python=${python}" >> ${GITHUB_OUTPUT}
+    shell: bash
+  - run: |
+      '${{ steps.select-python-interpreter.outputs.python }}' -m pip install \
+        -r '${{ github.action_path }}/requirements.txt'
+    shell: bash
+  - id: g-push-rev
+    run: |
+      flags=
+      force_push='${{ inputs.force-push }}'; force_push=${force_push,,}
+      test true != "${force_push}" || flags+=' --force-push'
+      safe_path='${{ inputs.safe-path }}'; safe_path=${safe_path,,}
+      test true != "${safe_path}" || flags+=' --safe-path'
+
+      '${{ steps.select-python-interpreter.outputs.python }}' \
+        '${{ github.action_path }}/../bin/gchl' g-push-rev \
+          '--local-path=${{ inputs.local-path }}' \
+          '--remote-url=${{ inputs.remote-url }}' \
+          '--username=${{ inputs.username }}' \
+          '--password=${{ inputs.password }}' \
+          '--rev-id=${{ inputs.rev-id }}' \
+          '--ref-type=${{ inputs.ref-type }}' \
+          '--ref-name=${{ inputs.ref-name }}' \
+          '--ref-message=${{ inputs.ref-message }}' \
+          ${flags}
+    shell: bash
