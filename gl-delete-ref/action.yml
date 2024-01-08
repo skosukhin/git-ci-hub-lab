@@ -16,6 +16,9 @@ inputs:
   ref-name:
     description: "name of the reference to delete"
     required: true
+  force:
+    description: "do not fail if the reference does not exist"
+    default: "false"
   python:
     description: >
       Python interpreter command to use to run the action scripts; if not
@@ -54,11 +57,16 @@ runs:
         -r '${{ github.action_path }}/requirements.txt'
     shell: bash
   - run: |
+      flags=
+      force='${{ inputs.force }}'; force=${force,,}
+      test true != "${force}" || flags+=' --force'
+
       '${{ steps.select-python-interpreter.outputs.python }}' \
         '${{ github.action_path }}/../bin/gchl' gl-delete-ref \
           '--server-url=${{ inputs.server-url }}' \
           '--project-name=${{ inputs.project-name }}' \
           '--token=${{ inputs.token }}' \
           '--ref-type=${{ inputs.ref-type }}' \
-          '--ref-name=${{ inputs.ref-name }}'
+          '--ref-name=${{ inputs.ref-name }}' \
+          ${flags}
     shell: bash

@@ -21,7 +21,13 @@ def setup_parser(parser):
     parser.add_argument(
         "--ref-name",
         required=True,
+        metavar="REF_NAME",
         help="name of the reference to delete",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="do not fail if REF_NAME does not exist (default: '%(default)s')",
     )
 
 
@@ -38,10 +44,18 @@ def cmd(args):
     project = server.projects.get(args.project_name)
 
     if args.ref_type == BRANCH:
-        project.branches.delete(args.ref_name)
+        ref_manager = project.branches
     elif args.ref_type == TAG:
-        project.tags.delete(args.ref_name)
+        ref_manager = project.tags
     else:
         raise AssertionError(
             "unexpected reference type {0}".format(args.ref_type)
         )
+
+    try:
+        ref_manager.delete(args.ref_name)
+    except gitlab.exceptions.GitlabDeleteError:
+        if not args.force or args.ref_name in [
+            x.name for x in ref_manager.list()
+        ]:
+            raise
