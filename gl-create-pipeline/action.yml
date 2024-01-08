@@ -48,15 +48,23 @@ runs:
   - id: select-python-interpreter
     run: |
       python='${{ inputs.python }}'
+      pip_install='true'
       if test -z "${python}"; then
-        '${{ steps.setup-python.outputs.python-path }}' -m venv \
-          '${{ github.action_path }}/venv'
         python='${{ github.action_path }}/venv/bin/python'
-        "${python}" -m pip install --upgrade pip
+        if test -e "${python}"; then
+          pip_install='false'
+        else
+          '${{ steps.setup-python.outputs.python-path }}' -m venv \
+            '${{ github.action_path }}/venv'
+        fi
       fi
       echo "python=${python}" >> ${GITHUB_OUTPUT}
+      echo "pip-install=${pip_install}" >> ${GITHUB_OUTPUT}
     shell: bash
-  - run: |
+  - if: ${{ steps.select-python-interpreter.outputs.pip-install == 'true' }}
+    run: |
+      '${{ steps.select-python-interpreter.outputs.python }}' -m pip install \
+        --upgrade pip
       '${{ steps.select-python-interpreter.outputs.python }}' -m pip install \
         -r '${{ github.action_path }}/requirements.txt'
     shell: bash
