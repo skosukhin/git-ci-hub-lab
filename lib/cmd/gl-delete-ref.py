@@ -1,7 +1,6 @@
-description = "deletes a git reference from GitLab repository"
+from common import TAG, BRANCH
 
-BRANCH = "branch"
-TAG = "tag"
+description = "deletes a git reference from GitLab repository"
 
 
 def setup_parser(parser):

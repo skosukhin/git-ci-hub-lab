@@ -1,0 +1,63 @@
+name: "g-delete-ref"
+description: "deletes a git reference from the remote repository"
+inputs:
+  remote-url:
+    description: "remote repository URL"
+    required: true
+  username:
+    description: "remote repository username"
+    default: "token"
+  password:
+    description: "remote repository password"
+  ref-type:
+    description: "type of the reference (tag or branch) to delete"
+    required: true
+  ref-name:
+    description: "name of the reference to delete"
+    required: true
+  python:
+    description: >
+      Python interpreter command to use to run the action scripts; if not
+      provided (i.e. the value equals to an empty string), the action runs
+      preliminary steps to sets up the required Python virtual environment
+runs:
+  using: "composite"
+  steps:
+  - id: setup-python
+    if: ${{ inputs.python == '' }}
+    uses: actions/setup-python@v4
+    with:
+      python-version: ">=3.7"
+      update-environment: false
+  - id: select-python-interpreter
+    run: |
+      python='${{ inputs.python }}'
+      pip_install='true'
+      if test -z "${python}"; then
+        python='${{ github.action_path }}/venv/bin/python'
+        if test -e "${python}"; then
+          pip_install='false'
+        else
+          '${{ steps.setup-python.outputs.python-path }}' -m venv \
+            '${{ github.action_path }}/venv'
+        fi
+      fi
+      echo "python=${python}" >> ${GITHUB_OUTPUT}
+      echo "pip-install=${pip_install}" >> ${GITHUB_OUTPUT}
+    shell: bash
+  - if: ${{ steps.select-python-interpreter.outputs.pip-install == 'true' }}
+    run: |
+      '${{ steps.select-python-interpreter.outputs.python }}' -m pip install \
+        --upgrade pip
+      '${{ steps.select-python-interpreter.outputs.python }}' -m pip install \
+        -r '${{ github.action_path }}/requirements.txt'
+    shell: bash
+  - run: |
+      '${{ steps.select-python-interpreter.outputs.python }}' \
+        '${{ github.action_path }}/../bin/gchl' g-delete-ref \
+          '--remote-url=${{ inputs.remote-url }}' \
+          '--username=${{ inputs.username }}' \
+          '--password=${{ inputs.password }}' \
+          '--ref-type=${{ inputs.ref-type }}' \
+          '--ref-name=${{ inputs.ref-name }}'
+    shell: bash

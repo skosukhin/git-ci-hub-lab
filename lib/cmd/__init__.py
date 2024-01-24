@@ -2,6 +2,7 @@ import importlib
 
 commands = [
     "g-push-rev",
+    "g-delete-ref",
     "gl-create-pipeline",
     "gl-trigger-pipeline",
     "gl-attach-job",
