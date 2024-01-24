@@ -36,8 +36,8 @@ def cmd(args):
         private_token=args.token,
     )
 
-    project = server.projects.get(args.project_name)
-    pipeline = project.pipelines.get(args.pipeline_id)
+    project = server.projects.get(args.project_name, lazy=True)
+    pipeline = project.pipelines.get(args.pipeline_id, lazy=True)
 
     final_statuses = {"success", "failed", "canceled", "skipped"}
 

@@ -41,7 +41,7 @@ def cmd(args):
         private_token=args.token,
     )
 
-    project = server.projects.get(args.project_name)
+    project = server.projects.get(args.project_name, lazy=True)
 
     if args.ref_type == BRANCH:
         ref_manager = project.branches

@@ -48,7 +48,7 @@ def cmd(args):
         private_token=args.token,
     )
 
-    project = server.projects.get(args.project_name)
+    project = server.projects.get(args.project_name, lazy=True)
     pipeline = project.pipelines.create({"ref": args.ref_name})
     print(
         "pipeline for `{0}` ({1}): {2}".format(
