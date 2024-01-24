@@ -1,0 +1,72 @@
+name: "gl-trigger-pipeline"
+description: "triggers a GitLab CI pipeline"
+inputs:
+  server-url:
+    description: "GitLab server URL"
+    required: true
+  project-name:
+    description: "GitLab project name"
+    required: true
+  token:
+    description: "GitLab pipeline trigger token"
+    required: true
+  ref-name:
+    description: >
+      name of the reference (tag or branch) to create the pipeline for
+    required: true
+  expected-sha:
+    description: "expected prefix of the commit SHA-1 of the triggered pipeline"
+  python:
+    description: >
+      Python interpreter command to use to run the action scripts; if not
+      provided (i.e. the value equals to an empty string), the action runs
+      preliminary steps to sets up the required Python virtual environment
+outputs:
+  pipeline-id:
+    description: "ID of the triggered pipeline"
+    value: ${{ steps.gl-trigger-pipeline.outputs.pipeline-id }}
+  pipeline-sha:
+    description: "Commit SHA-1 the pipeline was triggered for"
+    value: ${{ steps.gl-trigger-pipeline.outputs.pipeline-sha }}
+runs:
+  using: "composite"
+  steps:
+  - id: setup-python
+    if: ${{ inputs.python == '' }}
+    uses: actions/setup-python@v4
+    with:
+      python-version: ">=3.7"
+      update-environment: false
+  - id: select-python-interpreter
+    run: |
+      python='${{ inputs.python }}'
+      pip_install='true'
+      if test -z "${python}"; then
+        python='${{ github.action_path }}/venv/bin/python'
+        if test -e "${python}"; then
+          pip_install='false'
+        else
+          '${{ steps.setup-python.outputs.python-path }}' -m venv \
+            '${{ github.action_path }}/venv'
+        fi
+      fi
+      echo "python=${python}" >> ${GITHUB_OUTPUT}
+      echo "pip-install=${pip_install}" >> ${GITHUB_OUTPUT}
+    shell: bash
+  - if: ${{ steps.select-python-interpreter.outputs.pip-install == 'true' }}
+    run: |
+      '${{ steps.select-python-interpreter.outputs.python }}' -m pip install \
+        --upgrade pip
+      '${{ steps.select-python-interpreter.outputs.python }}' -m pip install \
+        -r '${{ github.action_path }}/requirements.txt'
+    shell: bash
+  - id: gl-trigger-pipeline
+    run: |
+      '${{ steps.select-python-interpreter.outputs.python }}' \
+        '${{ github.action_path }}/../bin/gchl' gl-trigger-pipeline \
+          '--server-url=${{ inputs.server-url }}' \
+          '--project-name=${{ inputs.project-name }}' \
+          '--token=${{ inputs.token }}' \
+          '--ref-name=${{ inputs.ref-name }}' \
+          '--expected-sha=${{ inputs.expected-sha }}'
+    shell: bash
