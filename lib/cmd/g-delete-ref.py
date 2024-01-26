@@ -36,6 +36,12 @@ def setup_parser(parser):
         metavar="REF_NAME",
         help="name of the reference to delete",
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="do not fail if REF_NAME could not be deleted "
+        "(default: '%(default)s')",
+    )
 
 
 def cmd(args):
@@ -69,6 +75,15 @@ def cmd(args):
         '}}; f"'.format(password_variable)
     )
 
+    if args.ref_type == BRANCH:
+        ref_namespace = "heads"
+    elif args.ref_type == TAG:
+        ref_namespace = "tags"
+    else:
+        raise AssertionError(
+            "unexpected reference type {0}".format(args.ref_type)
+        )
+
     with tempfile.TemporaryDirectory(prefix="ghcl-") as d:
         repo = Repo.init(d, mkdir=False)
         with git_config(repo, required_config):
@@ -76,22 +91,12 @@ def cmd(args):
                 if args.password is not None:
                     os.environ[password_variable] = args.password
                 try:
-                    if args.ref_type == BRANCH:
-                        namespace = "heads"
-                    elif args.ref_type == TAG:
-                        namespace = "tags"
-                    else:
-                        raise AssertionError(
-                            "unexpected reference type {0}".format(
-                                args.ref_type
-                            )
-                        )
-
                     remote.push(
-                        ":refs/{0}/{1}".format(namespace, args.ref_name)
+                        ":refs/{0}/{1}".format(ref_namespace, args.ref_name)
                     ).raise_if_error()
                 except Exception:
-                    raise
+                    if not args.force:
+                        raise
                 finally:
                     if args.password is not None:
                         os.environ.pop(password_variable, None)

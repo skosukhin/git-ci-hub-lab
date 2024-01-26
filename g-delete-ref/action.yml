@@ -15,6 +15,9 @@ inputs:
   ref-name:
     description: "name of the reference to delete"
     required: true
+  force:
+    description: "do not fail if the reference could not be deleted"
+    default: "false"
   python:
     description: >
       Python interpreter command to use to run the action scripts; if not
@@ -53,11 +56,16 @@ runs:
         -r '${{ github.action_path }}/requirements.txt'
     shell: bash
   - run: |
+      flags=
+      force='${{ inputs.force }}'; force=${force,,}
+      test true != "${force}" || flags+=' --force'
+
       '${{ steps.select-python-interpreter.outputs.python }}' \
         '${{ github.action_path }}/../bin/gchl' g-delete-ref \
           '--remote-url=${{ inputs.remote-url }}' \
           '--username=${{ inputs.username }}' \
           '--password=${{ inputs.password }}' \
           '--ref-type=${{ inputs.ref-type }}' \
-          '--ref-name=${{ inputs.ref-name }}'
+          '--ref-name=${{ inputs.ref-name }}' \
+          ${flags}
     shell: bash
