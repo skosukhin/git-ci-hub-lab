@@ -17,7 +17,7 @@ inputs:
     description: "name of the reference to delete"
     required: true
   force:
-    description: "do not fail if the reference does not exist"
+    description: "do not fail if the reference could not be deleted"
     default: "false"
   python:
     description: >

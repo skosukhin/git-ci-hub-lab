@@ -26,7 +26,8 @@ def setup_parser(parser):
     parser.add_argument(
         "--force",
         action="store_true",
-        help="do not fail if REF_NAME does not exist (default: '%(default)s')",
+        help="do not fail if REF_NAME could not be deleted "
+        "(default: '%(default)s')",
     )
 
 
@@ -53,8 +54,6 @@ def cmd(args):
 
     try:
         ref_manager.delete(args.ref_name)
-    except gitlab.exceptions.GitlabDeleteError:
-        if not args.force or args.ref_name in [
-            x.name for x in ref_manager.list()
-        ]:
+    except Exception:
+        if not args.force:
             raise
