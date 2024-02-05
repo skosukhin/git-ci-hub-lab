@@ -15,6 +15,15 @@ inputs:
   rev-id:
     description: "ID of the revision to push as understood by git-rev-parse"
     default: "HEAD"
+  rev-signing-format:
+    description: >
+      format (none or ssh) to be used to sign rev-id before pushing it to the
+      remote repository
+    default: "none"
+  rev-signing-key:
+    description: >
+      base64-encoded key to be used to sign rev-id before pushing it to the
+      remote repository (ignored if rev-signing-format is none)
   ref-type:
     description: >
       type of the reference (tag or branch) to be used to push rev-id to the
@@ -57,6 +66,9 @@ outputs:
       name of the reference that was used to push rev-id to the remote
       repository
     value: ${{ steps.g-push-rev.outputs.ref-name }}
+  ref-commit:
+    description: "commit SHA-1 the reference was created for"
+    value: ${{ steps.g-push-rev.outputs.ref-commit }}
 runs:
   using: "composite"
   steps:
@@ -104,6 +116,8 @@ runs:
           '--username=${{ inputs.username }}' \
           '--password=${{ inputs.password }}' \
           '--rev-id=${{ inputs.rev-id }}' \
+          '--rev-signing-format=${{ inputs.rev-signing-format }}' \
+          '--rev-signing-key=${{ inputs.rev-signing-key }}' \
           '--ref-type=${{ inputs.ref-type }}' \
           '--ref-name=${{ inputs.ref-name }}' \
           '--ref-message=${{ inputs.ref-message }}' \

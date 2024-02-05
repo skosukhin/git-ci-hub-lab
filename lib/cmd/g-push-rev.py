@@ -13,6 +13,7 @@ from common import (
     git_keep_head,
     git_ref_exists_and_unique,
     git_remote,
+    git_signing,
 )
 
 description = (
@@ -40,9 +41,25 @@ def setup_parser(parser):
     )
     parser.add_argument(
         "--rev-id",
+        metavar="REV_ID",
         default="HEAD",
         help="ID of the revision to push as understood by git-rev-parse "
         "(default: '%(default)s')",
+    )
+    signing_formats = [SIGNING_FORMAT_NONE, SIGNING_FORMAT_SSH]
+    parser.add_argument(
+        "--rev-signing-format",
+        metavar="REV_SIGNING_FORMAT {{{0}}}".format(",".join(signing_formats)),
+        choices=signing_formats,
+        default=SIGNING_FORMAT_NONE,
+        help="format to be used to sign REV_ID before pushing it to the remote "
+        "repository (default '%(default)s')",
+    )
+    parser.add_argument(
+        "--rev-signing-key",
+        help="base64-encoded key to be used to sign REV_ID before pushing it "
+        "to the remote repository (ignored if REV_SIGNING_FORMAT is '{0}', "
+        "default: $GCHL_REV_SIGNING_KEY)".format(SIGNING_FORMAT_NONE),
     )
     ref_types = [TAG, BRANCH]
     parser.add_argument(
@@ -65,7 +82,6 @@ def setup_parser(parser):
         "REF_TYPE is '{0}' and REF_SIGNING_FORMAT is not '{1}', "
         "ignored if REF_TYPE is not '{0}')".format(TAG, SIGNING_FORMAT_NONE),
     )
-    signing_formats = [SIGNING_FORMAT_NONE, SIGNING_FORMAT_SSH]
     parser.add_argument(
         "--ref-signing-format",
         metavar="REF_SIGNING_FORMAT {{{0}}}".format(",".join(signing_formats)),
@@ -128,9 +144,13 @@ def cmd(args):
     )
 
     # Annotated and signed tags require the committer information:
-    if args.ref_type == TAG and (
+    name_needed = args.ref_type == TAG and (
         args.ref_message or args.ref_signing_format != SIGNING_FORMAT_NONE
-    ):
+    )
+    # Signed commits require the committer information:
+    name_needed = name_needed or args.rev_signing_format != SIGNING_FORMAT_NONE
+
+    if name_needed:
         required_config["repository"]["user"] = {
             "name": "g-push-rev",
             "email": "g-push-rev@git-ci-hub-lab",
@@ -152,6 +172,20 @@ def cmd(args):
                 ref_name = "gchl-{0}-{1}".format(
                     args.ref_type, commit.hexsha[:8]
                 )
+
+            rev_signing_format = args.rev_signing_format
+            if rev_signing_format != SIGNING_FORMAT_NONE:
+                rev_signing_key = args.rev_signing_key or os.environ.get(
+                    "GCHL_REV_SIGNING_KEY", None
+                )
+                if rev_signing_key:
+                    rev_signing_key = base64.b64decode(rev_signing_key)
+                with git_signing(repo, rev_signing_format, rev_signing_key):
+                    repo.head.reference = commit
+                    # TODO: handle erroneous zero exit code from git, which
+                    #  happens when ssh-keygen is unable to find the key
+                    repo.git.commit(amend=True, no_edit=True, gpg_sign=True)
+                    commit = repo.head.commit
 
             ref_message = args.ref_message
             if (
@@ -186,7 +220,12 @@ def cmd(args):
                         # TODO: make it more generic
                         if "GITHUB_OUTPUT" in os.environ:
                             with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-                                print("ref-name={0}".format(ref_name), file=f)
+                                f.writelines(
+                                    [
+                                        "ref-name={0}\n".format(ref_name),
+                                        "ref-commit={0}\n".format(commit),
+                                    ]
+                                )
                     finally:
                         if args.password is not None:
                             os.environ.pop(password_variable, None)
