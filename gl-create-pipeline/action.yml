@@ -34,7 +34,7 @@ outputs:
     description: "ID of the created pipeline"
     value: ${{ steps.gl-create-pipeline.outputs.pipeline-id }}
   pipeline-sha:
-    description: "Commit SHA-1 the pipeline was created for"
+    description: "commit SHA-1 the pipeline was created for"
     value: ${{ steps.gl-create-pipeline.outputs.pipeline-sha }}
 runs:
   using: "composite"

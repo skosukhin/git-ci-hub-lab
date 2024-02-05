@@ -4,7 +4,7 @@ import string
 import tempfile
 import uuid
 
-from common import TAG, BRANCH, git_config, tmp_git_remote
+from common import BRANCH, TAG, git_config, tmp_git_remote
 
 description = "deletes a git reference from the remote repository"
 

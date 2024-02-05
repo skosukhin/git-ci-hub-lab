@@ -26,7 +26,7 @@ outputs:
     description: "ID of the triggered pipeline"
     value: ${{ steps.gl-trigger-pipeline.outputs.pipeline-id }}
   pipeline-sha:
-    description: "Commit SHA-1 the pipeline was triggered for"
+    description: "commit SHA-1 the pipeline was triggered for"
     value: ${{ steps.gl-trigger-pipeline.outputs.pipeline-sha }}
 runs:
   using: "composite"

@@ -5,13 +5,13 @@ import string
 import uuid
 
 from common import (
-    TAG,
     BRANCH,
+    TAG,
+    SIGNING_FORMAT_NONE,
+    SIGNING_FORMAT_SSH,
     git_config,
     git_ref_exists_and_unique,
     tmp_git_remote,
-    SIGNING_FORMAT_NONE,
-    SIGNING_FORMAT_SSH,
 )
 
 description = (

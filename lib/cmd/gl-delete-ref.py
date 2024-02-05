@@ -1,4 +1,4 @@
-from common import TAG, BRANCH
+from common import BRANCH, TAG
 
 description = "deletes a git reference from GitLab repository"
 
