@@ -26,7 +26,17 @@ inputs:
       (defaults to an arbitrary combination of ref-type and SHA-1 of rev-id)
   ref-message:
     description: >
-      annotation message of the reference (ignored if ref-type is not tag)
+      annotation message of the reference (defaults to signed if ref-type is
+      tag and ref-signing-format is not none, ignored if ref-type is not tag)
+  ref-signing-format:
+    description: >
+      format (none or ssh) to be used to sign the reference
+      (ignored if ref-type is not tag)
+    default: "none"
+  ref-signing-key:
+    description: >
+      base64-encoded key to be used to sign the reference
+      (ignored if ref-type is not tag or ref-signing-format is none)
   force-push:
     description: "force push the reference to the remote repository"
     default: "false"
@@ -97,5 +107,7 @@ runs:
           '--ref-type=${{ inputs.ref-type }}' \
           '--ref-name=${{ inputs.ref-name }}' \
           '--ref-message=${{ inputs.ref-message }}' \
+          '--ref-signing-format=${{ inputs.ref-signing-format }}' \
+          '--ref-signing-key=${{ inputs.ref-signing-key }}' \
           ${flags}
     shell: bash

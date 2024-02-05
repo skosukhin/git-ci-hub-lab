@@ -1,8 +1,12 @@
+import tempfile
 import uuid
 from contextlib import contextmanager
 
 BRANCH = "branch"
 TAG = "tag"
+
+SIGNING_FORMAT_NONE = "none"
+SIGNING_FORMAT_SSH = "ssh"
 
 
 @contextmanager
@@ -53,6 +57,34 @@ def git_config(repo, config):
 
 
 @contextmanager
+def git_signing(repo, signing_format=SIGNING_FORMAT_NONE, signing_key=None):
+    if signing_format == SIGNING_FORMAT_NONE:
+        yield
+        return
+
+    signing_config = {"repository": {"gpg": {"format": signing_format}}}
+
+    if signing_format == SIGNING_FORMAT_SSH:
+        with tempfile.NamedTemporaryFile(
+            prefix="ghcl-", suffix=uuid.uuid4().hex
+        ) as key_file:
+            signing_config["repository"].update(
+                {"user": {"signingkey": key_file.name}}
+            )
+            with git_config(repo, signing_config):
+                try:
+                    key_file.write(signing_key)
+                    key_file.flush()
+                    yield
+                finally:
+                    key_file.close()
+    else:
+        raise AssertionError(
+            "unexpected signing format {0}".format(signing_format)
+        )
+
+
+@contextmanager
 def git_ref_exists_and_unique(repo, ref_type, ref_name, commit, **kwargs):
     def backup_ref(name, refs):
         # Finds a reference with the specified name in the provided collection
@@ -86,7 +118,20 @@ def git_ref_exists_and_unique(repo, ref_type, ref_name, commit, **kwargs):
 
         # Create the requested reference:
         if ref_type == TAG:
-            repo.create_tag(ref_name, commit, kwargs.get("message", None))
+            ref_signing_format = kwargs.get(
+                "ref_signing_format", SIGNING_FORMAT_NONE
+            )
+            with git_signing(
+                repo, ref_signing_format, kwargs.get("ref_signing_key", None)
+            ):
+                # TODO: handle erroneous zero exit code from git, which happens
+                #  when ssh-keygen is unable to find the key
+                repo.create_tag(
+                    ref_name,
+                    commit,
+                    kwargs.get("ref_message", None),
+                    sign=(ref_signing_format != SIGNING_FORMAT_NONE),
+                )
         elif ref_type == BRANCH:
             repo.create_head(ref_name, commit)
         else:
