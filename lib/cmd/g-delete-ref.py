@@ -4,7 +4,7 @@ import string
 import tempfile
 import uuid
 
-from common import BRANCH, TAG, git_config, tmp_git_remote
+from common import BRANCH, TAG, git_config, git_remote
 
 description = "deletes a git reference from the remote repository"
 
@@ -87,7 +87,7 @@ def cmd(args):
     with tempfile.TemporaryDirectory(prefix="ghcl-") as d:
         repo = Repo.init(d, mkdir=False)
         with git_config(repo, required_config):
-            with tmp_git_remote(repo, args.remote_url) as remote:
+            with git_remote(repo, args.remote_url) as remote:
                 if args.password is not None:
                     os.environ[password_variable] = args.password
                 try:

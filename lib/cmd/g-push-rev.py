@@ -10,8 +10,9 @@ from common import (
     SIGNING_FORMAT_NONE,
     SIGNING_FORMAT_SSH,
     git_config,
+    git_keep_head,
     git_ref_exists_and_unique,
-    tmp_git_remote,
+    git_remote,
 )
 
 description = (
@@ -144,42 +145,48 @@ def cmd(args):
 
     with git_config(repo, required_config):
         commit = repo.commit(args.rev_id)
-        ref_name = args.ref_name
-        if not ref_name:
-            ref_name = "gchl-{0}-{1}".format(args.ref_type, commit.hexsha[:8])
 
-        # TODO: make it more generic
-        if "GITHUB_OUTPUT" in os.environ:
-            with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-                print("ref-name={0}".format(ref_name), file=f)
+        with git_keep_head(repo):
+            ref_name = args.ref_name
+            if not ref_name:
+                ref_name = "gchl-{0}-{1}".format(
+                    args.ref_type, commit.hexsha[:8]
+                )
 
-        ref_message = args.ref_message
-        if not ref_message and args.ref_signing_format != SIGNING_FORMAT_NONE:
-            ref_message = "signed"
+            ref_message = args.ref_message
+            if (
+                not ref_message
+                and args.ref_signing_format != SIGNING_FORMAT_NONE
+            ):
+                ref_message = "signed"
 
-        ref_signing_key = args.ref_signing_key or os.environ.get(
-            "GCHL_REF_SIGNING_KEY", None
-        )
-        if ref_signing_key:
-            ref_signing_key = base64.b64decode(ref_signing_key)
-        with git_ref_exists_and_unique(
-            repo,
-            args.ref_type,
-            ref_name,
-            commit,
-            ref_message=ref_message,
-            ref_signing_format=args.ref_signing_format,
-            ref_signing_key=ref_signing_key,
-        ):
-            with tmp_git_remote(repo, args.remote_url) as remote:
-                if args.password is not None:
-                    os.environ[password_variable] = args.password
-                try:
-                    remote.push(
-                        ref_name, force=args.force_push
-                    ).raise_if_error()
-                except Exception:
-                    raise
-                finally:
+            ref_signing_key = args.ref_signing_key or os.environ.get(
+                "GCHL_REF_SIGNING_KEY", None
+            )
+            if ref_signing_key:
+                ref_signing_key = base64.b64decode(ref_signing_key)
+
+            with git_ref_exists_and_unique(
+                repo,
+                args.ref_type,
+                ref_name,
+                commit,
+                ref_message=ref_message,
+                ref_signing_format=args.ref_signing_format,
+                ref_signing_key=ref_signing_key,
+            ):
+                with git_remote(repo, args.remote_url) as remote:
                     if args.password is not None:
-                        os.environ.pop(password_variable, None)
+                        os.environ[password_variable] = args.password
+                    try:
+                        remote.push(
+                            ref_name, force=args.force_push
+                        ).raise_if_error()
+
+                        # TODO: make it more generic
+                        if "GITHUB_OUTPUT" in os.environ:
+                            with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+                                print("ref-name={0}".format(ref_name), file=f)
+                    finally:
+                        if args.password is not None:
+                            os.environ.pop(password_variable, None)
