@@ -1,6 +1,8 @@
 import sys
 import time
 
+from common import JOB_FINAL_STATUSES, JOB_SUCCESS, PIPELINE_FINAL_STATUSES
+
 description = (
     "attaches to a GitLab job in the CI pipeline and redirects its trace"
 )
@@ -39,8 +41,6 @@ def cmd(args):
     project = server.projects.get(args.project_name, lazy=True)
     pipeline = project.pipelines.get(args.pipeline_id, lazy=True)
 
-    final_statuses = {"success", "failed", "canceled", "skipped"}
-
     requested_job = None
     reported_trace_len = 0
 
@@ -66,7 +66,7 @@ def cmd(args):
         else:
             requested_job.refresh()
         if requested_job is None:
-            if pipeline.status in final_statuses:
+            if pipeline.status in PIPELINE_FINAL_STATUSES:
                 break
         else:
             poll_trace_len = 0
@@ -78,7 +78,7 @@ def cmd(args):
                 if chunk_len > unreported_subchunk_start:
                     print(chunk[unreported_subchunk_start:], end="")
                     reported_trace_len = poll_trace_len
-            if requested_job.status in final_statuses:
+            if requested_job.status in JOB_FINAL_STATUSES:
                 break
 
         time.sleep(poll_timeout)
@@ -92,4 +92,4 @@ def cmd(args):
         )
         exit(1)
 
-    exit(requested_job.status != "success")
+    exit(requested_job.status != JOB_SUCCESS)

@@ -3,6 +3,8 @@ import time
 
 import os
 
+from common import PIPELINE_FINAL_STATUSES, PIPELINE_SUCCESS
+
 description = "creates a GitLab CI pipeline"
 
 
@@ -78,11 +80,9 @@ def cmd(args):
         exit(1)
 
     if args.attach:
-        final_statuses = {"success", "failed", "canceled", "skipped"}
-
         poll_timeout = 0 if args.poll_timeout < 0 else args.poll_timeout
 
-        while pipeline.status not in final_statuses:
+        while pipeline.status not in PIPELINE_FINAL_STATUSES:
             time.sleep(poll_timeout)
             pipeline.refresh()
             for job in pipeline.jobs.list():
@@ -98,4 +98,4 @@ def cmd(args):
             )
         )
 
-        exit(pipeline.status != "success")
+        exit(pipeline.status != PIPELINE_SUCCESS)

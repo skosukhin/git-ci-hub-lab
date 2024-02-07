@@ -8,6 +8,12 @@ TAG = "tag"
 SIGNING_FORMAT_NONE = "none"
 SIGNING_FORMAT_SSH = "ssh"
 
+JOB_SUCCESS = "success"
+JOB_FINAL_STATUSES = {JOB_SUCCESS, "failed", "canceled", "skipped"}
+
+PIPELINE_SUCCESS = "success"
+PIPELINE_FINAL_STATUSES = {PIPELINE_SUCCESS, "failed", "canceled", "skipped"}
+
 
 @contextmanager
 def git_config(repo, config):
