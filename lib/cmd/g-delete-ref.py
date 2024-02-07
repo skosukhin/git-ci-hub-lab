@@ -4,7 +4,15 @@ import string
 import tempfile
 import uuid
 
-from common import BRANCH, TAG, git_config, git_remote, GHCLAssertionError
+from common import (
+    BRANCH,
+    TAG,
+    git_config,
+    git_remote,
+    GHCLAssertionError,
+    info,
+    warn,
+)
 
 description = "deletes a git reference from the remote repository"
 
@@ -94,8 +102,21 @@ def cmd(args):
                     remote.push(
                         ":refs/{0}/{1}".format(ref_namespace, args.ref_name)
                     ).raise_if_error()
+                    info(
+                        "{0}{1} '{2}' is successfully deleted".format(
+                            args.ref_type[0].upper(),
+                            args.ref_type[1:],
+                            args.ref_name,
+                        )
+                    )
                 except Exception:
-                    if not args.force:
+                    if args.force:
+                        warn(
+                            "Failed to delete {0} '{1}'".format(
+                                args.ref_type, args.ref_name
+                            )
+                        )
+                    else:
                         raise
                 finally:
                     if args.password is not None:

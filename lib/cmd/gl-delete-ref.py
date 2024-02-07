@@ -1,4 +1,4 @@
-from common import BRANCH, TAG, GHCLAssertionError
+from common import BRANCH, TAG, GHCLAssertionError, info, warn
 
 description = "deletes a git reference from GitLab repository"
 
@@ -54,6 +54,17 @@ def cmd(args):
 
     try:
         ref_manager.delete(args.ref_name)
+        info(
+            "{0}{1} '{2}' is successfully deleted".format(
+                args.ref_type[0].upper(), args.ref_type[1:], args.ref_name
+            )
+        )
     except Exception:
-        if not args.force:
+        if args.force:
+            warn(
+                "Failed to delete {0} '{1}'".format(
+                    args.ref_type, args.ref_name
+                )
+            )
+        else:
             raise

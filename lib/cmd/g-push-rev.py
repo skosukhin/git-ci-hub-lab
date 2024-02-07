@@ -14,6 +14,7 @@ from common import (
     git_ref_exists_and_unique,
     git_remote,
     git_signing,
+    info,
 )
 
 description = (
@@ -115,7 +116,7 @@ def setup_parser(parser):
 def cmd(args):
     # Local import of a non-standard package, which makes it possible to get the
     # help message even if the package is not available:
-    from git import Repo
+    from git import RemoteProgress, Repo
 
     # Name for the credential section in the git configuration:
     credential_section_name = 'credential "{0}"'.format(args.remote_url)
@@ -213,8 +214,19 @@ def cmd(args):
                     if args.password is not None:
                         os.environ[password_variable] = args.password
                     try:
+
+                        class Progress(RemoteProgress):
+                            def update(
+                                self,
+                                op_code,
+                                cur_count,
+                                max_count=None,
+                                message="",
+                            ):
+                                info(self._cur_line)
+
                         remote.push(
-                            ref_name, force=args.force_push
+                            ref_name, force=args.force_push, progress=Progress()
                         ).raise_if_error()
 
                         # TODO: make it more generic

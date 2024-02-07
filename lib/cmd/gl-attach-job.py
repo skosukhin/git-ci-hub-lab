@@ -55,26 +55,37 @@ def cmd(args):
     while True:
         if requested_job is None:
             pipeline.refresh()
+            info(
+                "Pipeline for `{0}` (SHA: {1}): {2} ({3})".format(
+                    pipeline.ref,
+                    pipeline.sha[:8],
+                    pipeline.status,
+                    pipeline.web_url,
+                )
+            )
             for job in pipeline.jobs.list():
                 if job.name == args.job_name:
                     if requested_job is None:
-                        requested_job = project.jobs.get(job.id)
-                        info(
-                            "Attaching to job `{0}` ({1})".format(
-                                requested_job.name, requested_job.web_url
-                            )
-                        )
+                        requested_job = project.jobs.get(job.id, lazy=True)
                     else:
                         raise GHCLAssertionError(
                             "ambiguous job name: more than one job in the "
                             "pipeline has name `{0}`".format(args.job_name)
                         )
-        else:
-            requested_job.refresh()
+
         if requested_job is None:
             if pipeline.status in PIPELINE_FINAL_STATUSES:
                 break
         else:
+            requested_job.refresh()
+            if not reported_trace_len:
+                info(
+                    "\tjob `{0}`: {1} ({2})".format(
+                        requested_job.name,
+                        requested_job.status,
+                        requested_job.web_url,
+                    )
+                )
             poll_trace_len = 0
             for chunk in requested_job.trace(streamed=True, iterator=True):
                 chunk = chunk.decode()
@@ -90,6 +101,14 @@ def cmd(args):
                     reported_trace_len = poll_trace_len
             sys.stdout.flush()
             if requested_job.status in JOB_FINAL_STATUSES:
+                if reported_trace_len:
+                    info(
+                        "\tjob `{0}`: {1} ({2})".format(
+                            requested_job.name,
+                            requested_job.status,
+                            requested_job.web_url,
+                        )
+                    )
                 break
 
         time.sleep(poll_timeout)

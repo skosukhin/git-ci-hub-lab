@@ -52,8 +52,11 @@ def cmd(args):
     project = server.projects.get(args.project_name, lazy=True)
     pipeline = project.pipelines.create({"ref": args.ref_name})
     info(
-        "Pipeline for `{0}` ({1}): {2}".format(
-            args.ref_name, pipeline.web_url, pipeline.status
+        "Pipeline for `{0}` (SHA: {1}): {2} ({3})".format(
+            pipeline.ref,
+            pipeline.sha[:8],
+            pipeline.status,
+            pipeline.web_url,
         )
     )
 
@@ -84,14 +87,17 @@ def cmd(args):
             pipeline.refresh()
             for job in pipeline.jobs.list():
                 info(
-                    "\tjob `{0}` ({1}): {2}".format(
-                        job.name, job.web_url, job.status
+                    "\tjob `{0}`: {1} ({2})".format(
+                        job.name, job.status, job.web_url
                     )
                 )
 
         info(
-            "Pipeline for `{0}` ({1}): {2}".format(
-                args.ref_name, pipeline.web_url, pipeline.status
+            "Pipeline for `{0}` (SHA: {1}): {2} ({3})".format(
+                pipeline.ref,
+                pipeline.sha[:8],
+                pipeline.status,
+                pipeline.web_url,
             )
         )
 

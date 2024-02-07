@@ -37,8 +37,11 @@ def cmd(args):
     project = server.projects.get(args.project_name, lazy=True)
     pipeline = project.trigger_pipeline(args.ref_name, args.token)
     info(
-        "Pipeline for `{0}` ({1}): {2}".format(
-            args.ref_name, pipeline.web_url, pipeline.status
+        "Pipeline for `{0}` (SHA: {1}): {2} ({3})".format(
+            pipeline.ref,
+            pipeline.sha[:8],
+            pipeline.status,
+            pipeline.web_url,
         )
     )
 
