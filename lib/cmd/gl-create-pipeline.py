@@ -1,9 +1,8 @@
-import sys
 import time
 
 import os
 
-from common import PIPELINE_FINAL_STATUSES, PIPELINE_SUCCESS
+from common import PIPELINE_FINAL_STATUSES, PIPELINE_SUCCESS, info, warn
 
 description = "creates a GitLab CI pipeline"
 
@@ -52,11 +51,10 @@ def cmd(args):
 
     project = server.projects.get(args.project_name, lazy=True)
     pipeline = project.pipelines.create({"ref": args.ref_name})
-    print(
-        "pipeline for `{0}` ({1}): {2}".format(
+    info(
+        "Pipeline for `{0}` ({1}): {2}".format(
             args.ref_name, pipeline.web_url, pipeline.status
-        ),
-        flush=True,
+        )
     )
 
     # TODO: make it more generic
@@ -70,11 +68,10 @@ def cmd(args):
             )
 
     if not pipeline.sha.startswith(args.expected_sha):
-        print(
-            "pipeline SHA `{0}` does not match the expected SHA `{1}`".format(
+        warn(
+            "Pipeline SHA `{0}` does not match the expected SHA `{1}`".format(
                 pipeline.sha, args.expected_sha
-            ),
-            file=sys.stderr,
+            )
         )
         pipeline.cancel()
         exit(1)
@@ -86,14 +83,14 @@ def cmd(args):
             time.sleep(poll_timeout)
             pipeline.refresh()
             for job in pipeline.jobs.list():
-                print(
+                info(
                     "\tjob `{0}` ({1}): {2}".format(
                         job.name, job.web_url, job.status
                     )
                 )
 
-        print(
-            "pipeline for `{0}` ({1}): {2}".format(
+        info(
+            "Pipeline for `{0}` ({1}): {2}".format(
                 args.ref_name, pipeline.web_url, pipeline.status
             )
         )

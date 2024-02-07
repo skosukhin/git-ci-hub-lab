@@ -1,6 +1,6 @@
-import sys
-
 import os
+
+from common import info, warn
 
 description = "triggers a GitLab CI pipeline"
 
@@ -36,11 +36,10 @@ def cmd(args):
 
     project = server.projects.get(args.project_name, lazy=True)
     pipeline = project.trigger_pipeline(args.ref_name, args.token)
-    print(
-        "pipeline for `{0}` ({1}): {2}".format(
+    info(
+        "Pipeline for `{0}` ({1}): {2}".format(
             args.ref_name, pipeline.web_url, pipeline.status
-        ),
-        flush=True,
+        )
     )
 
     # TODO: make it more generic
@@ -54,11 +53,10 @@ def cmd(args):
             )
 
     if not pipeline.sha.startswith(args.expected_sha):
-        print(
-            "pipeline SHA `{0}` does not match the expected SHA `{1}`".format(
+        warn(
+            "Pipeline SHA `{0}` does not match the expected SHA `{1}`".format(
                 pipeline.sha, args.expected_sha
-            ),
-            file=sys.stderr,
+            )
         )
         pipeline.cancel()
         exit(1)

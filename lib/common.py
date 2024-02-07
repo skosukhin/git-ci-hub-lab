@@ -1,3 +1,5 @@
+import sys
+
 import tempfile
 import uuid
 from contextlib import contextmanager
@@ -13,6 +15,18 @@ JOB_FINAL_STATUSES = {JOB_SUCCESS, "failed", "canceled", "skipped"}
 
 PIPELINE_SUCCESS = "success"
 PIPELINE_FINAL_STATUSES = {PIPELINE_SUCCESS, "failed", "canceled", "skipped"}
+
+
+class GHCLAssertionError(AssertionError):
+    pass
+
+
+def info(message):
+    print(message, file=sys.stdout, flush=True)
+
+
+def warn(message):
+    print(message, file=sys.stderr, flush=True)
 
 
 @contextmanager
@@ -83,7 +97,7 @@ def git_signing(repo, signing_format=SIGNING_FORMAT_NONE, signing_key=None):
                 finally:
                     key_file.close()
     else:
-        raise AssertionError(
+        raise GHCLAssertionError(
             "unexpected signing format {0}".format(signing_format)
         )
 
@@ -164,7 +178,7 @@ def git_ref_exists_and_unique(repo, ref_type, ref_name, commit, **kwargs):
         elif ref_type == BRANCH:
             repo.create_head(ref_name, commit)
         else:
-            raise AssertionError(
+            raise GHCLAssertionError(
                 "unexpected reference type {0}".format(ref_type)
             )
 

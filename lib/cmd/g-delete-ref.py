@@ -4,7 +4,7 @@ import string
 import tempfile
 import uuid
 
-from common import BRANCH, TAG, git_config, git_remote
+from common import BRANCH, TAG, git_config, git_remote, GHCLAssertionError
 
 description = "deletes a git reference from the remote repository"
 
@@ -80,7 +80,7 @@ def cmd(args):
     elif args.ref_type == TAG:
         ref_namespace = "tags"
     else:
-        raise AssertionError(
+        raise GHCLAssertionError(
             "unexpected reference type {0}".format(args.ref_type)
         )
 
