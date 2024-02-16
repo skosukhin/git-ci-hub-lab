@@ -5,6 +5,7 @@ commands = [
     "g-delete-ref",
     "gl-create-pipeline",
     "gl-trigger-pipeline",
+    "gl-cancel-pipeline",
     "gl-attach-job",
     "gl-delete-ref",
 ]

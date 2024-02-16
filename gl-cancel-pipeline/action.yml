@@ -1,0 +1,60 @@
+name: "gl-cancel-pipeline"
+description: "cancels a GitLab CI pipeline"
+inputs:
+  server-url:
+    description: "GitLab server URL"
+    required: true
+  project-name:
+    description: "GitLab project name"
+    required: true
+  token:
+    description: "GitLab access token"
+    required: true
+  pipeline-id:
+    description: "ID of the pipeline"
+    required: true
+  python:
+    description: >
+      Python interpreter command to use to run the action scripts; if not
+      provided (i.e. the value equals to an empty string), the action runs
+      preliminary steps to sets up the required Python virtual environment
+runs:
+  using: "composite"
+  steps:
+  - id: setup-python
+    if: ${{ inputs.python == '' }}
+    uses: actions/setup-python@v5
+    with:
+      python-version: ">=3.7"
+      update-environment: false
+  - id: select-python-interpreter
+    run: |
+      python='${{ inputs.python }}'
+      pip_install='true'
+      if test -z "${python}"; then
+        python='${{ github.action_path }}/venv/bin/python'
+        if test -e "${python}"; then
+          pip_install='false'
+        else
+          '${{ steps.setup-python.outputs.python-path }}' -m venv \
+            '${{ github.action_path }}/venv'
+        fi
+      fi
+      echo "python=${python}" >> ${GITHUB_OUTPUT}
+      echo "pip-install=${pip_install}" >> ${GITHUB_OUTPUT}
+    shell: bash
+  - if: ${{ steps.select-python-interpreter.outputs.pip-install == 'true' }}
+    run: |
+      '${{ steps.select-python-interpreter.outputs.python }}' -m pip install \
+        --upgrade pip
+      '${{ steps.select-python-interpreter.outputs.python }}' -m pip install \
+        -r '${{ github.action_path }}/requirements.txt'
+    shell: bash
+  - run: |
+      '${{ steps.select-python-interpreter.outputs.python }}' \
+        '${{ github.action_path }}/../bin/gchl' gl-cancel-pipeline \
+          '--server-url=${{ inputs.server-url }}' \
+          '--project-name=${{ inputs.project-name }}' \
+          '--token=${{ inputs.token }}' \
+          '--pipeline-id=${{ inputs.pipeline-id }}'
+    shell: bash
