@@ -21,20 +21,20 @@ def setup_parser(parser):
     parser.add_argument(
         "--expected-sha",
         help="expected prefix of the commit SHA-1 of the created pipeline "
-        "(default: `%(default)s`)",
+        "(default: '%(default)s')",
         default="",
     )
     parser.add_argument(
         "--attach",
         action="store_true",
         help="wait for the created pipeline and report its final status "
-        "(default: `%(default)s`)",
+        "(default: '%(default)s')",
     )
     parser.add_argument(
         "--poll-timeout",
         type=int,
         default=10,
-        help="pipeline status poll timeout in seconds (default: `%(default)s`)",
+        help="pipeline status poll timeout in seconds (default: '%(default)s')",
     )
 
 
@@ -51,7 +51,7 @@ def cmd(args):
     project = server.projects.get(args.project_name, lazy=True)
     pipeline = project.pipelines.create({"ref": args.ref_name})
     info(
-        "Pipeline for `{0}` (SHA: {1}): {2} ({3})".format(
+        "Pipeline for '{0}' (SHA: {1}): {2} ({3})".format(
             pipeline.ref,
             pipeline.sha[:8],
             pipeline.status,
@@ -71,7 +71,7 @@ def cmd(args):
 
     if not pipeline.sha.startswith(args.expected_sha):
         warn(
-            "Pipeline SHA `{0}` does not match the expected SHA `{1}`".format(
+            "Pipeline SHA '{0}' does not match the expected SHA '{1}'".format(
                 pipeline.sha, args.expected_sha
             )
         )
@@ -86,13 +86,13 @@ def cmd(args):
             pipeline.refresh()
             for job in pipeline.jobs.list():
                 info(
-                    "\tjob `{0}`: {1} ({2})".format(
+                    "\tjob '{0}': {1} ({2})".format(
                         job.name, job.status, job.web_url
                     )
                 )
 
         info(
-            "Pipeline for `{0}` (SHA: {1}): {2} ({3})".format(
+            "Pipeline for '{0}' (SHA: {1}): {2} ({3})".format(
                 pipeline.ref,
                 pipeline.sha[:8],
                 pipeline.status,

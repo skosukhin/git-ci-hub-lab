@@ -30,7 +30,7 @@ def setup_parser(parser):
         "--poll-timeout",
         type=int,
         default=10,
-        help="job status poll timeout in seconds (default: `%(default)s`)",
+        help="job status poll timeout in seconds (default: '%(default)s')",
     )
 
 
@@ -56,7 +56,7 @@ def cmd(args):
         if requested_job is None:
             pipeline.refresh()
             info(
-                "Pipeline for `{0}` (SHA: {1}): {2} ({3})".format(
+                "Pipeline for '{0}' (SHA: {1}): {2} ({3})".format(
                     pipeline.ref,
                     pipeline.sha[:8],
                     pipeline.status,
@@ -70,7 +70,7 @@ def cmd(args):
                     else:
                         raise GHCLAssertionError(
                             "ambiguous job name: more than one job in the "
-                            "pipeline has name `{0}`".format(args.job_name)
+                            "pipeline has name '{0}'".format(args.job_name)
                         )
 
         if requested_job is None:
@@ -80,7 +80,7 @@ def cmd(args):
             requested_job.refresh()
             if not reported_trace_len:
                 info(
-                    "\tjob `{0}`: {1} ({2})".format(
+                    "\tjob '{0}': {1} ({2})".format(
                         requested_job.name,
                         requested_job.status,
                         requested_job.web_url,
@@ -103,7 +103,7 @@ def cmd(args):
             if requested_job.status in JOB_FINAL_STATUSES:
                 if reported_trace_len:
                     info(
-                        "\tjob `{0}`: {1} ({2})".format(
+                        "\tjob '{0}': {1} ({2})".format(
                             requested_job.name,
                             requested_job.status,
                             requested_job.web_url,
@@ -115,7 +115,7 @@ def cmd(args):
 
     if requested_job is None:
         raise GHCLAssertionError(
-            "job `{0}` is not found in pipeline for SHA `{1}` ({2})".format(
+            "job '{0}' is not found in pipeline for SHA '{1}' ({2})".format(
                 args.job_name, pipeline.sha[:8], pipeline.web_url
             )
         )

@@ -22,7 +22,7 @@ def setup_parser(parser):
     parser.add_argument(
         "--expected-sha",
         help="expected prefix of the commit SHA-1 of the triggered pipeline "
-        "(default: `%(default)s`)",
+        "(default: '%(default)s')",
         default="",
     )
 
@@ -37,7 +37,7 @@ def cmd(args):
     project = server.projects.get(args.project_name, lazy=True)
     pipeline = project.trigger_pipeline(args.ref_name, args.token)
     info(
-        "Pipeline for `{0}` (SHA: {1}): {2} ({3})".format(
+        "Pipeline for '{0}' (SHA: {1}): {2} ({3})".format(
             pipeline.ref,
             pipeline.sha[:8],
             pipeline.status,
@@ -57,7 +57,7 @@ def cmd(args):
 
     if not pipeline.sha.startswith(args.expected_sha):
         warn(
-            "Pipeline SHA `{0}` does not match the expected SHA `{1}`".format(
+            "Pipeline SHA '{0}' does not match the expected SHA '{1}'".format(
                 pipeline.sha, args.expected_sha
             )
         )
