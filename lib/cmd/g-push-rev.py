@@ -225,9 +225,25 @@ def cmd(args):
                             ):
                                 info(self._cur_line)
 
+                        info(
+                            "Pushing {0} '{1}' "
+                            "to the remote repository:".format(
+                                args.ref_type, ref_name
+                            )
+                        )
+
                         remote.push(
                             ref_name, force=args.force_push, progress=Progress()
                         ).raise_if_error()
+
+                        info(
+                            "{0}{1} '{2}' is successfully pushed "
+                            "to the remote repository".format(
+                                args.ref_type[0].upper(),
+                                args.ref_type[1:],
+                                ref_name,
+                            )
+                        )
 
                         # TODO: make it more generic
                         if "GITHUB_OUTPUT" in os.environ:
