@@ -61,6 +61,11 @@ inputs:
       provided (i.e. the value equals to an empty string), the action runs
       preliminary steps to sets up the required Python virtual environment
 outputs:
+  ref-type:
+    description: >
+      type of the reference (tag or branch) that was used to push rev-id to the
+      remote repository
+    value: ${{ steps.g-push-rev.outputs.ref-type }}
   ref-name:
     description: >
       name of the reference that was used to push rev-id to the remote

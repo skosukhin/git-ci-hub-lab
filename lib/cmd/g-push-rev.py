@@ -234,6 +234,7 @@ def cmd(args):
                             with open(os.environ["GITHUB_OUTPUT"], "a") as f:
                                 f.writelines(
                                     [
+                                        "ref-type={0}\n".format(args.ref_type),
                                         "ref-name={0}\n".format(ref_name),
                                         "ref-commit={0}\n".format(commit),
                                     ]
