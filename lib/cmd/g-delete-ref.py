@@ -7,9 +7,9 @@ import uuid
 from common import (
     BRANCH,
     TAG,
+    GHCLAssertionError,
     git_config,
     git_remote,
-    GHCLAssertionError,
     info,
     warn,
 )

@@ -6,9 +6,9 @@ import uuid
 
 from common import (
     BRANCH,
-    TAG,
     SIGNING_FORMAT_NONE,
     SIGNING_FORMAT_SSH,
+    TAG,
     git_config,
     git_keep_head,
     git_ref_exists_and_unique,

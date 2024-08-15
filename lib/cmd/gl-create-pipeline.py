@@ -1,6 +1,5 @@
-import time
-
 import os
+import time
 
 from common import PIPELINE_FINAL_STATUSES, PIPELINE_SUCCESS, info, warn
 
