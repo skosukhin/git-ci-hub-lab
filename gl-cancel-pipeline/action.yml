@@ -13,6 +13,9 @@ inputs:
   pipeline-id:
     description: "ID of the pipeline"
     required: true
+  force:
+    description: "do not fail if the pipeline could not be cancelled"
+    default: "false"
   python:
     description: >
       Python interpreter command to use to run the action scripts; if not
@@ -51,10 +54,15 @@ runs:
         -r '${{ github.action_path }}/requirements.txt'
     shell: bash
   - run: |
+      flags=
+      force='${{ inputs.force }}'; force=${force,,}
+      test true != "${force}" || flags+=' --force'
+
       '${{ steps.select-python-interpreter.outputs.python }}' \
         '${{ github.action_path }}/../bin/gchl' gl-cancel-pipeline \
           '--server-url=${{ inputs.server-url }}' \
           '--project-name=${{ inputs.project-name }}' \
           '--token=${{ inputs.token }}' \
-          '--pipeline-id=${{ inputs.pipeline-id }}'
+          '--pipeline-id=${{ inputs.pipeline-id }}' \
+          ${flags}
     shell: bash
